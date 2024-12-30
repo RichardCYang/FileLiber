@@ -83,8 +83,10 @@ btn_all_select.addEventListener('click', (e) => {
     const fileItems = document.querySelectorAll('.file-grid-item');
     userinfo.allSelectionMode = !userinfo.allSelectionMode;
 
-    for (let i = 0; i < fileItems.length; i++)
+    for (let i = 0; i < fileItems.length; i++) {
         fileItems[i].selected = userinfo.allSelectionMode;
+        fileItems[i].checkbox.innerHTML = userinfo.allSelectionMode ? '☑️' : '🔲';
+    }
 
     if (userinfo.allSelectionMode)
         btn_all_select.classList.add('menubar-button-toggle-active');

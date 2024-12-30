@@ -3,6 +3,7 @@ const userinfo = [];
 userinfo.currentPath        = '.';
 userinfo.selectionMode      = false;
 userinfo.allSelectionMode   = false;
+userinfo.selectedFiles      = [];
 
 function makeStringArrayToCommaString(strarr) {
     const arr = [];
@@ -169,6 +170,23 @@ function clearFiles() {
     fileGrid.innerHTML = '';
 }
 
+function isSelectedFile(filename) {
+    for (let i = 0; i < userinfo.selectedFiles.length; i++) {
+        if (userinfo.selectedFiles[i] === filename)
+            return true;
+    }
+    return false;
+}
+
+function removeFileFromSelection(filename) {
+    const temp = [];
+    for (let i = 0; i < userinfo.selectedFiles.length; i++) {
+        if (userinfo.selectedFiles[i] !== filename)
+            temp.push(userinfo.selectedFiles[i]);
+    }
+    userinfo.selectedFiles = temp;
+}
+
 function matchIcon(type, name) {
     if (type === 'folder')
         return '📁';
@@ -239,7 +257,7 @@ function matchIcon(type, name) {
     return '📄'
 }
 
-function addFile(name, type, size, created, modified) {
+function addFile(name, type, size, created, modified, isSelected) {
     const fileGrid = document.getElementById('fileGrid');
     const fileItem = document.createElement('div');
     const fileIcon = document.createElement('i');
@@ -248,12 +266,13 @@ function addFile(name, type, size, created, modified) {
     const icon = matchIcon(type, name);
     fileIcon.innerHTML = icon;
     fileName.innerHTML = name;
-    fileCHBX.innerHTML = '🔲';
+    fileCHBX.innerHTML = isSelected ? '☑️' : '🔲';
     fileCHBX.classList.add('file-grid-checkbox');
+    fileItem.checkbox  = fileCHBX;
     fileItem.appendChild(fileIcon);
     fileItem.appendChild(fileName);
     fileItem.appendChild(fileCHBX);
-    fileItem.selected  = false;
+    fileItem.selected  = isSelected ? isSelected : false;
     fileItem.fileName  = name;
     fileItem.className = 'file-grid-item';
     fileItem.clickWait = null;
@@ -262,6 +281,11 @@ function addFile(name, type, size, created, modified) {
         if (userinfo.selectionMode) {
             fileItem.selected = !fileItem.selected;
             fileCHBX.innerHTML = fileItem.selected ? '☑️' : '🔲';
+
+            if (fileItem.selected)
+                userinfo.selectedFiles.push(fileItem.fileName);
+            else
+                removeFileFromSelection(userinfo.fileName);
             return;
         }
 
@@ -323,6 +347,13 @@ function refreshCurrentDirPage() {
             addFile('..', 'folder', 0, Date.now(), Date.now());
 
         for (let i = 0; i < data.length; i++)
-            addFile(data[i].name, data[i].type, data[i].size, data[i].created, data[i].modified);
+            addFile(data[i].name, data[i].type, data[i].size, data[i].created, data[i].modified, userinfo.selectionMode && isSelectedFile(data[i].name));
+    
+        if (userinfo.selectionMode) {
+            const checkboxs = document.querySelectorAll('.file-grid-checkbox');
+            for (let i = 0; i < checkboxs.length; i++) {
+                checkboxs[i].style.setProperty('display', userinfo.selectionMode ? 'block' : 'none', 'important');
+            }
+        }
     });
 }
