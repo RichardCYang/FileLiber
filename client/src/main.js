@@ -3,6 +3,7 @@ refreshCurrentDirPage();
 const main_area         = document.querySelector('.main');
 const btn_add_folder    = document.querySelector('#btnAddFolder');
 const btn_select        = document.querySelector('#btnSelect');
+const btn_all_select    = document.querySelector('#btnAllSelect');
 const btn_remove        = document.querySelector('#btnRemove');
 const btn_donwload      = document.querySelector('#btnDownload');
 const btn_all_files     = document.querySelector('#btnHome');
@@ -22,7 +23,7 @@ main_area.addEventListener('drop', (e) => {
 });
 
 btn_add_folder.addEventListener('click', (e) => {
-    createDialog('Enter Folder Name', 'Type here...', function (value) {
+    createDialog('폴더 생성', '폴더명 입력...', function (value) {
         createFolder(value);
     });
 });
@@ -37,7 +38,7 @@ btn_remove.addEventListener('click', (e) => {
     }
 
     if (selectedItems.length == 0) {
-        createMessageDialog('Notice', 'No selected files to delete');
+        createMessageDialog('알림', '선택된 항목이 없습니다');
         return;
     }
 
@@ -57,7 +58,7 @@ btn_donwload.addEventListener('click', (e) => {
     }
 
     if (selectedItems.length == 0) {
-        createMessageDialog('Notice', 'No selected files to download');
+        createMessageDialog('알림', '선택된 항목이 없습니다');
         return;
     }
 
@@ -72,10 +73,26 @@ btn_select.addEventListener('click', (e) => {
         checkboxs[i].style.setProperty('display', userinfo.selectionMode ? 'block' : 'none', 'important');
     }
 
-    if (userinfo.selectionMode)
+    if (userinfo.selectionMode) {
         btn_select.classList.add('menubar-button-toggle-active');
-    else
+        btn_all_select.style.setProperty('display', 'none', 'important');
+    } else {
         btn_select.classList.remove('menubar-button-toggle-active');
+        btn_all_select.style.removeProperty('display');
+    }
+});
+
+btn_all_select.addEventListener('click', (e) => {
+    const fileItems = document.querySelectorAll('.file-grid-item');
+    userinfo.allSelectionMode = !userinfo.allSelectionMode;
+
+    for (let i = 0; i < fileItems.length; i++)
+        fileItems[i].selected = userinfo.allSelectionMode;
+
+    if (userinfo.allSelectionMode)
+        btn_all_select.classList.add('menubar-button-toggle-active');
+    else
+        btn_all_select.classList.remove('menubar-button-toggle-active');
 });
 
 btn_all_files.addEventListener('click', (e) => {

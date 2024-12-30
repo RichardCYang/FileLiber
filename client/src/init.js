@@ -1,7 +1,8 @@
 // Global Definitions
 const userinfo = [];
-userinfo.currentPath = '.';
-userinfo.selectionMode = false;
+userinfo.currentPath        = '.';
+userinfo.selectionMode      = false;
+userinfo.allSelectionMode   = false;
 
 function makeStringArrayToCommaString(strarr) {
     const arr = [];
