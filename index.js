@@ -13,6 +13,13 @@ const PORT = 3000;
 const HOST = '127.0.0.1';
 const MYSQL_CONFIG = {};
 
+// 초기 사용자 정보 폴더 및 휴지통 폴더 확인 -> 없으면 기본 생성
+if (!fs.existsSync(path.join(__dirname, 'users')))
+    fs.mkdirSync(path.join(__dirname, 'users'));
+
+if (!fs.existsSync(path.join(__dirname, 'recyclebin')))
+    fs.mkdirSync(path.join(__dirname, 'recyclebin'));
+
 // 초기 .env 파일 확인 -> 없으면 기본 생성
 if (!fs.existsSync(path.join(__dirname, '.env'))) {
     const defaultCtx = [];
