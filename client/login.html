@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <link rel="stylesheet" href="./style/dialog.css" type="text/css"/>
+    <link rel="stylesheet" href="./style/login.css" type="text/css"/>
+    <script src="./src/sha512.js" type="text/javascript"></script>
+    <script src="./src/dialog.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="login-container">
+        <h1>로그인</h1>
+        <form>
+            <input type="text" placeholder="사용자명" id="txtUsername" required autocomplete="username">
+            <input type="password" placeholder="비밀번호" id="pwPassword" required autocomplete="current-password">
+            <button type="button" id="btnLogin">로그인</button>
+        </form>
+        <a href="./register.html" class="signup-link">회원가입</a>
+    </div>
+    <script src="./src/login.js" type="text/javascript"></script>
+</body>
+</html>

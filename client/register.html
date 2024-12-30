@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="./style/dialog.css" type="text/css"/>
+    <link rel="stylesheet" href="./style/register.css" type="text/css"/>
+    <script src="./src/sha512.js" type="text/javascript"></script>
+    <script src="./src/dialog.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="signup-container">
+        <h1>회원가입</h1>
+        <form>
+            <input type="text" placeholder="사용자명" id="txtUsername" required autocomplete="username">
+            <input type="email" placeholder="이메일" id="txtEmail" required autocomplete="email">
+            <input type="password" placeholder="비밀번호" id="pwPassword" required autocomplete="new-password">
+            <input type="password" placeholder="비밀번호 확인" id="pwConfirmPassword" required autocomplete="new-password">
+            <button type="button" id="btnSignup">가입</button>
+        </form>
+        <a href="./login.html" class="login-link">이미 계정이 있으신가요? 로그인</a>
+    </div>
+    <script src="./src/register.js" type="text/javascript"></script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #4a4a4a;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+header {
+    background-color: #d0e6f7;
+    color: #34495e;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #a4cce3;
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.content {
+    display: flex;
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #dfe6ed;
+    width: 250px;
+    padding: 20px;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.sidebar.hidden {
+    transform: translateX(-100%);
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    color: #34495e;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #f4f4f9;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li:hover {
+    background-color: #e8eff6;
+}
+
+.sidebar ul li i {
+    margin-right: 10px;
+}
+
+.main {
+    flex-grow: 1;
+    padding: 40px;
+    overflow: hidden;
+    transition: margin-left 0.3s ease;
+}
+
+.menubar {
+    height: 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.menubar button {
+    background: #ffffff;
+    border: 1px solid #dfe6ed;
+    font-size: 14px;
+    padding: 0px 8px;
+    border-radius: 4px;
+}
+
+.menubar button:hover {
+    background-color: #e8eff6;
+}
+
+.menubar-button-toggle-active {
+    background-color: #e8eff6 !important;
+}
+
+h2 {
+    color: #34495e;
+}
+
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.file-grid-item {
+    text-align: center;
+    padding: 10px;
+    background-color: #ffffff;
+    border: 1px solid #dfe6ed;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.file-grid-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.file-grid-checkbox {
+    font-size: 12px !important;
+    margin: 0px !important;
+    font-style: normal !important;
+    display: none !important;
+}
+
+.file-grid-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-grid-item i {
+    font-size: 36px;
+    display: block;
+}
+
+.file-grid-item span {
+    font-size: 14px;
+    color: #34495e;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 64px;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.details-sidebar {
+    position: absolute;
+    top: 0;
+    right: -100%;
+    width: 300px;
+    height: 100%;
+    background-color: #ffffff;
+    border-left: 1px solid #dfe6ed;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    padding: 20px;
+}
+
+.details-sidebar.active {
+    right: 0;
+}
+
+.details-sidebar h2 {
+    font-size: 18px;
+    color: #34495e;
+    margin-bottom: 20px;
+}
+
+.details-sidebar .details-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.details-sidebar .details-container div {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border: 1px solid #dfe6ed;
+    border-radius: 8px;
+    background-color: #f9f9fc;
+}
+
+.details-sidebar .details-container div span {
+    font-size: 14px;
+    color: #34495e;
+}
+
+.details-sidebar .toggle-btn {
+    position: absolute;
+    top: 50%;
+    left: -24px;
+    transform: translateY(-50%);
+    background-color: #d0e6f7;
+    border: none;
+    border-radius: 5px 0 0 5px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+    width: 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -1px 0px 4px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.details-sidebar .toggle-btn:hover {
+    background-color: #a4cce3;
+}
+
+@media (max-width: 760px) {
+    .menubar {
+        height: 81px;
+    }
+}
+
+@media (max-width: 1048px) {
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+}
