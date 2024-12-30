@@ -235,13 +235,13 @@ h2 {
     background-color: #a4cce3;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     .menubar {
         height: 81px;
     }
 }
 
-@media (max-width: 1048px) {
+@media (max-width: 1200px) {
     .sidebar {
         display: none;
     }

@@ -73,13 +73,10 @@ btn_select.addEventListener('click', (e) => {
         checkboxs[i].style.setProperty('display', userinfo.selectionMode ? 'block' : 'none', 'important');
     }
 
-    if (userinfo.selectionMode) {
+    if (userinfo.selectionMode)
         btn_select.classList.add('menubar-button-toggle-active');
-        btn_all_select.style.setProperty('display', 'none', 'important');
-    } else {
+    else
         btn_select.classList.remove('menubar-button-toggle-active');
-        btn_all_select.style.removeProperty('display');
-    }
 });
 
 btn_all_select.addEventListener('click', (e) => {
