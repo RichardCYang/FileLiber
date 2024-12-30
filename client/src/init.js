@@ -172,31 +172,51 @@ function matchIcon(type, name) {
     if (type === 'folder')
         return '📁';
 
-    if (name.indexOf('.zip') > -1 ||
-        name.indexOf('.tar') > -1 ||
-        name.indexOf('.jar') > -1 ||
-        name.indexOf('.war') > -1 ||
-        name.indexOf('.egg') > -1 ||
-        name.indexOf('.alz') > -1)
-        return '📦';
+    name = name.toLowerCase();
 
-    if (name.indexOf('.wma') > -1 ||
-        name.indexOf('.wav') > -1 ||
-        name.indexOf('.ogg') > -1 ||
-        name.indexOf('.mp3') > -1)
-        return '🎵';
+    const extensions = [
+        {type: 'image', extension: '.jpeg'},
+        {type: 'image', extension: '.png'},
+        {type: 'image', extension: '.jpg'},
+        {type: 'image', extension: '.bmp'},
+        {type: 'image', extension: '.tga'},
+        {type: 'image', extension: '.gif'},
+        {type: 'sound', extension: '.wma'},
+        {type: 'sound', extension: '.wav'},
+        {type: 'sound', extension: '.ogg'},
+        {type: 'sound', extension: '.mp3'},
+        {type: 'archive', extension: '.zip'},
+        {type: 'archive', extension: '.tar'},
+        {type: 'archive', extension: '.jar'},
+        {type: 'archive', extension: '.war'},
+        {type: 'archive', extension: '.egg'},
+        {type: 'archive', extension: '.alz'},
+        {type: 'document', extension: '.pdf'},
+        {type: 'document', extension: '.hwp'},
+        {type: 'document', extension: '.xls'},
+        {type: 'document', extension: '.docx'}
+    ];
 
-    if (name.indexOf('.png') > -1 ||
-        name.indexOf('.jpg') > -1 ||
-        name.indexOf('.bmp') > -1 ||
-        name.indexOf('.tga') > -1 ||
-        name.indexOf('.gif') > -1)
-        return '🖼️';
+    for (let i = 0; i < extensions.length; i++) {
+        if (name.indexOf(extensions[i].extension) > -1) {
+            switch (extensions[i].type) {
+                case 'image':
+                    return '🖼️';
 
-    if (name.indexOf('.pdf') > -1)
-        return '📑';
+                case 'sound':
+                    return '🎵';
 
-    return '📄';
+                case 'archive':
+                    return '📦';
+
+                case 'document':
+                    return '📑';
+
+                default:
+                    return '📄';
+            }
+        }
+    }
 }
 
 function addFile(name, type, size, created, modified) {
