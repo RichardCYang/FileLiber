@@ -60,8 +60,15 @@ function uploadControl(req, res) {
         return;
     }
 
-    const boundary  = Buffer.from(`--${req.headers['content-type'].split('boundary=')[1]}`);
     const directory = req.headers['x-directory-path'];
+    const uploadDir = directory.replace('.', path.join(USER_DIR, username));
+    if (!fs.existsSync(uploadDir)) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('DIRECTORY_NOTFOUND');
+        return;
+    }
+
+    const boundary  = Buffer.from(`--${req.headers['content-type'].split('boundary=')[1]}`);
     const buffers   = [];
 
     req.on('data', (chunk) => {
@@ -70,6 +77,7 @@ function uploadControl(req, res) {
 
     req.on('end', () => {
         const rawData = Buffer.concat(buffers);
+        const doneflags = [];
 
         let parts = [];
         let start = 0;
@@ -89,27 +97,36 @@ function uploadControl(req, res) {
                 if (filenameMatch) {
                     const filename = filenameMatch[1].trim();
                     const fileBuffer = part.slice(headerEndIndex + 4);
-                    const uploadDir = directory.replace('.', path.join(USER_DIR, username));
-
-                    if (!fs.existsSync(uploadDir)) {
-                        res.writeHead(400, { 'Content-Type': 'text/plain' });
-                        res.end('DIRECTORY_NOTFOUND');
-                        return;
-                    }
 
                     fs.writeFile(path.join(uploadDir, filename), fileBuffer, (err) => {
                         if (err) {
-                            res.writeHead(500, { 'Content-Type': 'text/plain' });
-                            res.end('UPLOAD_ERR');
+                            doneflags.push(false);
                             return;
                         }
+
+                        doneflags.push(true);
                     });
                 }
             }
         });
 
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('UPLOAD_OK');
+        const waitTimer = setInterval(() => {
+            if (doneflags.length == parts.length) {
+                for (let i = 0; i < doneflags.length; i++) {
+                    if (!doneflags[i]) {
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end('UPLOAD_ERR');
+                        clearInterval(waitTimer);
+                        return;
+                    }
+                }
+    
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('UPLOAD_OK');
+                clearInterval(waitTimer);
+                return;
+            }
+        }, 100);
     });
 }
 
