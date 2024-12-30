@@ -32,7 +32,7 @@ $ vi .env
 $ npm start
 ```
 
-### 2-1. .env 환경 설정 파일 내용
+### 2-1. 환경 설정 파일 (.env) 내용
 ```bash
 MYSQL_HOST=서버주소
 MYSQL_USER=사용자명
