@@ -26,11 +26,18 @@ $ cd fileliber
 $ npm install
 
 # 환경 변수 파일 설정
-$ cp .env.example .env
-# .env 파일을 열어 필요한 값 채우기
+$ vi .env
 
 # 서버 실행
 $ npm start
+```
+
+### 2-1. .env 환경 설정 파일 내용
+```bash
+MYSQL_HOST=서버주소
+MYSQL_USER=사용자명
+MYSQL_PASSWORD=비밀번호
+MYSQL_DATABASE=DB명
 ```
 
 ### 3. 실행
