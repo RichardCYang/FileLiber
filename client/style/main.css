@@ -203,7 +203,7 @@ h2 {
 }
 
 .details-namebox {
-    display: grid;
+    display: grid !important;
 }
 
 .details-sidebar .details-container div span {
