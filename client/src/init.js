@@ -176,15 +176,25 @@ function matchIcon(type, name) {
 
     const extensions = [
         {type: 'image', extension: '.jpeg'},
+        {type: 'image', extension: '.webp'},
         {type: 'image', extension: '.png'},
         {type: 'image', extension: '.jpg'},
         {type: 'image', extension: '.bmp'},
         {type: 'image', extension: '.tga'},
         {type: 'image', extension: '.gif'},
+        {type: 'video', extension: '.mp4'},
+        {type: 'video', extension: '.wmv'},
+        {type: 'video', extension: '.mov'},
+        {type: 'video', extension: '.avi'},
         {type: 'sound', extension: '.wma'},
         {type: 'sound', extension: '.wav'},
         {type: 'sound', extension: '.ogg'},
         {type: 'sound', extension: '.mp3'},
+        {type: 'execute', extension: 'exe'},
+        {type: 'execute', extension: 'com'},
+        {type: 'execute', extension: 'msi'},
+        {type: 'execute', extension: 'bat'},
+        {type: 'execute', extension: 'cmd'},
         {type: 'archive', extension: '.zip'},
         {type: 'archive', extension: '.tar'},
         {type: 'archive', extension: '.jar'},
@@ -192,9 +202,13 @@ function matchIcon(type, name) {
         {type: 'archive', extension: '.egg'},
         {type: 'archive', extension: '.alz'},
         {type: 'document', extension: '.pdf'},
+        {type: 'document', extension: '.ppt'},
+        {type: 'document', extension: '.csv'},
         {type: 'document', extension: '.hwp'},
         {type: 'document', extension: '.xls'},
-        {type: 'document', extension: '.docx'}
+        {type: 'document', extension: '.docx'},
+        {type: 'document', extension: '.pptx'},
+        {type: 'document', extension: '.xlsx'}
     ];
 
     for (let i = 0; i < extensions.length; i++) {
@@ -203,20 +217,25 @@ function matchIcon(type, name) {
                 case 'image':
                     return '🖼️';
 
+                case 'video':
+                    return '📼';
+
                 case 'sound':
                     return '🎵';
+
+                case 'execute':
+                    return '▶️';
 
                 case 'archive':
                     return '📦';
 
                 case 'document':
                     return '📑';
-
-                default:
-                    return '📄';
             }
         }
     }
+
+    return '📄'
 }
 
 function addFile(name, type, size, created, modified) {
