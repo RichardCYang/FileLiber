@@ -1,15 +1,17 @@
 const utils = require('./utils');
 const mysql = require('mysql');
 
-const dbconn = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'admin',
-    database: 'fileliber'
-});
+let dbconn = null;
 
-function connect() {
+function connect(dbconninfo) {
     // 초기 데이터베이스 연결 설정
+    dbconn = mysql.createConnection({
+        host: dbconninfo.HOST,
+        user: dbconninfo.USER,
+        password: dbconninfo.PASSWORD,
+        database: dbconninfo.DATABASE
+    });
+
     dbconn.connect((err) => {
         if (err) {
             utils.printLog('ERROR', err);
@@ -65,7 +67,6 @@ function login(username, password, callback) {
 }
 
 function initTables() {
-    connect();
     dbconn.query('CREATE TABLE IF NOT EXISTS userinfo (id INTEGER PRIMARY KEY AUTO_INCREMENT, username VARCHAR(254), password VARCHAR(512))', (err, results) => {
         if (err) {
             utils.printLog('ERROR', err);
@@ -77,5 +78,6 @@ function initTables() {
 module.exports = {
     initTables,
     register,
+    connect,
     login,
 };

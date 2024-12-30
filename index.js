@@ -1,4 +1,5 @@
 const cookie    = require('cookie');
+const utils     = require('./utils');
 const http      = require('http');
 const path      = require('path');
 const fs        = require('fs');
@@ -10,7 +11,68 @@ const dbmanager   = require('./dbmanager');
 // 메인 서버 설정
 const PORT = 3000;
 const HOST = '127.0.0.1';
+const MYSQL_CONFIG = {};
 
+// 초기 .env 파일 확인 -> 없으면 기본 생성
+if (!fs.existsSync(path.join(__dirname, '.env'))) {
+    const defaultCtx = [];
+    defaultCtx.push('MYSQL_HOST=\n');
+    defaultCtx.push('MYSQL_USER=\n');
+    defaultCtx.push('MYSQL_PASSWORD=\n');
+    defaultCtx.push('MYSQL_DATABASE=');
+    try {
+        fs.writeFileSync(path.join(__dirname, '.env'), defaultCtx.join(''), { encoding: 'utf8' });
+        utils.printLog('INFO', 'The .env file has been successfully created.');
+        utils.printLog('INFO', 'Please configure the file and run the program again.');
+        process.exit(0);
+    } catch (error) {
+        utils.printLog('ERROR', error);
+        process.exit(0);
+    }
+} else {
+    try {
+        const envFileContent = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
+        const envConfig = {};
+
+        envFileContent.split('\n').forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine && !trimmedLine.startsWith('#')) {
+                const [key, value] = trimmedLine.split('=');
+                if (key)
+                    envConfig[key.trim()] = value ? value.trim() : '';
+            }
+        });
+
+        MYSQL_CONFIG.HOST       = envConfig['MYSQL_HOST'];
+        MYSQL_CONFIG.USER       = envConfig['MYSQL_USER'];
+        MYSQL_CONFIG.PASSWORD   = envConfig['MYSQL_PASSWORD'];
+        MYSQL_CONFIG.DATABASE   = envConfig['MYSQL_DATABASE'];
+
+        if (!MYSQL_CONFIG.HOST || MYSQL_CONFIG.HOST === '') {
+            utils.printLog('ERROR', 'The `MYSQL_HOST` field is empty.');
+            process.exit(0);
+        }
+
+        if (!MYSQL_CONFIG.USER || MYSQL_CONFIG.USER === '') {
+            utils.printLog('ERROR', 'The `MYSQL_USER` field is empty.');
+            process.exit(0);
+        }
+
+        if (!MYSQL_CONFIG.PASSWORD || MYSQL_CONFIG.PASSWORD === '') {
+            utils.printLog('ERROR', 'The `MYSQL_PASSWORD` field is empty.');
+            process.exit(0);
+        }
+
+        if (!MYSQL_CONFIG.DATABASE || MYSQL_CONFIG.DATABASE === '') {
+            utils.printLog('ERROR', 'The `MYSQL_DATABASE` field is empty.');
+            process.exit(0);
+        }
+    } catch (error) {
+        utils.printLog('ERROR', error);
+    }
+}
+
+dbmanager.connect(MYSQL_CONFIG);
 dbmanager.initTables();
 
 const server = http.createServer((req, res) => {
