@@ -1,4 +1,4 @@
-# FileLiber <img src="./icon.svg" alt="메인 아이콘" width="24" height="24">
+# FileLiber <img src="./icon.svg" alt="메인 아이콘" width="28" height="28" style="position: relative; top: 4px;">
 
 FileLiber는 효율적이고 사용하기 쉬운 원격 파일 관리 웹앱 소프트웨어입니다. 사용자 친화적인 인터페이스와 강력한 기능으로, 여러 장치 간에 파일을 안전하고 간편하게 관리할 수 있습니다.
 
