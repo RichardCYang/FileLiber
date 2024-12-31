@@ -33,22 +33,40 @@ function logout() {
     }
 }
 
-function traverseDirectory(directoryEntry, callback, folderPath = '') {
+function readEntriesAsync(reader) {
+    return new Promise((resolve, reject) => {
+        reader.readEntries(resolve, reject);
+    });
+}
+
+function getFileAsync(fileEntry) {
+    return new Promise((resolve, reject) => {
+        fileEntry.file(resolve, reject);
+    });
+}
+
+async function traverseDirectoryAsync(directoryEntry, folderPath = '', files=[]) {
     const reader = directoryEntry.createReader();
     const currentPath = folderPath + directoryEntry.name + '/';
 
-    reader.readEntries((entries) => {
-        for (let i = 0; i < entries.length; i++) {
-            const entry = entries[i];
+    try {
+        const entries = await readEntriesAsync(reader);
+
+        for (const entry of entries) {
             if (entry.isDirectory) {
-                traverseDirectory(entry, callback, currentPath);
+                // 디렉토리인 경우 재귀 호출
+                await traverseDirectoryAsync(entry, currentPath, files);
             } else if (entry.isFile) {
-                entry.file((file) => callback(file, currentPath));
+                // 파일 처리
+                const file = await getFileAsync(entry);
+                files.push({rawfile: file, path: currentPath});
             }
         }
-    }, (error) => {
+    } catch (error) {
         console.error("Error reading directory:", error);
-    });
+    }
+
+    return files;
 }
 
 function loadDirectoryInfo(path, callback) {
@@ -145,12 +163,15 @@ function downloadFile(files) {
     };
 }
 
-function uploadFiles(files) {
+function uploadFiles(files, path) {
     if (!files)
         return;
 
     if (files.length == 0)
         return;
+
+    if (!path)
+        path = userinfo.currentPath;
 
     const formData = new FormData();
 
@@ -160,7 +181,7 @@ function uploadFiles(files) {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/upload', true);
-    xhr.setRequestHeader('X-Directory-Path', userinfo.currentPath);
+    xhr.setRequestHeader('X-Directory-Path', path);
     xhr.send(formData);
 
     xhr.onreadystatechange = () => {
@@ -362,10 +383,11 @@ function toggleDetails() {
 }
 
 function refreshCurrentDirPage() {
-    clearFiles();
     loadDirectoryInfo(userinfo.currentPath, (data) => {
         if (data == null)
             return;
+
+        clearFiles();
 
         if (userinfo.currentPath !== '.' && userinfo.currentPath !== 'RECYCLE_BIN')
             addFile('..', 'folder', 0, Date.now(), Date.now());

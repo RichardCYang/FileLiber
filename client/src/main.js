@@ -14,7 +14,7 @@ main_area.addEventListener('dragover', (e) => {
     e.preventDefault();
 });
 
-main_area.addEventListener('drop', (e) => {
+main_area.addEventListener('drop', async(e) => {
     e.preventDefault();
 
     // 브라우저가 webkitGetAsEntry()를 통한 폴더 드롭을 지원하는지 확인
@@ -25,16 +25,21 @@ main_area.addEventListener('drop', (e) => {
         const dirfiles = [];
         for (let i = 0; i < items.length; i++) {
             const entry = items[i].webkitGetAsEntry();
-            if (entry.isDirectory()) {
-                traverseDirectory(entry, (file, directory) => {
-                    dirfiles.push(file);
-                });
+            if (entry.isDirectory) {
+                const subfiles = await traverseDirectoryAsync(entry);
+                for (let i = 0; i < subfiles.length; i++)
+                    dirfiles.push(subfiles[i]);
             } else {
                 onlyfiles.push(items[i].getAsFile());
             }
         }
+
+        for (let i = 0; i < dirfiles.length; i++) {
+            createFolder(dirfiles[i].path);
+            uploadFiles([dirfiles[i].rawfile], userinfo.currentPath + '/' + dirfiles[i].path);
+        }
+
         uploadFiles(onlyfiles);
-        uploadFiles(dirfiles);
     } else {
         uploadFiles(e.dataTransfer.files);
     }
