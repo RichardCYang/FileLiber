@@ -33,6 +33,24 @@ function logout() {
     }
 }
 
+function traverseDirectory(directoryEntry, callback, folderPath = '') {
+    const reader = directoryEntry.createReader();
+    const currentPath = folderPath + directoryEntry.name + '/';
+
+    reader.readEntries((entries) => {
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+            if (entry.isDirectory) {
+                traverseDirectory(entry, callback, currentPath);
+            } else if (entry.isFile) {
+                entry.file((file) => callback(file, currentPath));
+            }
+        }
+    }, (error) => {
+        console.error("Error reading directory:", error);
+    });
+}
+
 function loadDirectoryInfo(path, callback) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/getdirinfo', true);
@@ -128,6 +146,12 @@ function downloadFile(files) {
 }
 
 function uploadFiles(files) {
+    if (!files)
+        return;
+
+    if (files.length == 0)
+        return;
+
     const formData = new FormData();
 
     for (let i = 0; i < files.length; i++) {

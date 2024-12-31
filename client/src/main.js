@@ -17,9 +17,27 @@ main_area.addEventListener('dragover', (e) => {
 main_area.addEventListener('drop', (e) => {
     e.preventDefault();
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0)
-        uploadFiles(files);
+    // 브라우저가 webkitGetAsEntry()를 통한 폴더 드롭을 지원하는지 확인
+    // 24년 12월 31일 기준 FireFox for Android 브라우저에 지원 X
+    if (typeof DataTransferItem.prototype.webkitGetAsEntry === 'function') {
+        const items = e.dataTransfer.items;
+        const onlyfiles = [];
+        const dirfiles = [];
+        for (let i = 0; i < items.length; i++) {
+            const entry = items[i].webkitGetAsEntry();
+            if (entry.isDirectory()) {
+                traverseDirectory(entry, (file, directory) => {
+                    dirfiles.push(file);
+                });
+            } else {
+                onlyfiles.push(items[i].getAsFile());
+            }
+        }
+        uploadFiles(onlyfiles);
+        uploadFiles(dirfiles);
+    } else {
+        uploadFiles(e.dataTransfer.files);
+    }
 });
 
 btn_add_folder.addEventListener('click', (e) => {
