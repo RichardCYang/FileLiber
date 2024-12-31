@@ -19,7 +19,7 @@ FileLiber는 효율적이고 사용하기 쉬운 원격 파일 관리 웹앱 소
 ### 2. 설치
 ```bash
 # 리포지토리 클론
-$ git clone https://github.com/yourusername/fileliber.git
+$ git clone https://github.com/RichardCYang/FileLiber.git
 $ cd fileliber
 
 # 의존성 설치
