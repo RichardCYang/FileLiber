@@ -383,6 +383,9 @@ function toggleDetails() {
 }
 
 function refreshCurrentDirPage() {
+    const locationIndicator = document.querySelector('#txtAddress');
+    locationIndicator.value = userinfo.currentPath === '.' ? 'HOME' : userinfo.currentPath.replace('./', 'HOME/');
+
     loadDirectoryInfo(userinfo.currentPath, (data) => {
         if (data == null)
             return;
