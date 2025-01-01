@@ -53,13 +53,7 @@ function matchSubPathByHash(dir, username, hash) {
     return null;
 }
 
-function getDirInfoControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.end('[]');
-        return;
-    }
-
+function getDirInfoControl(req, res, username) {
     const directory = decodeURIComponent(req.headers['x-directory-path']);
     const workpath  = directory.startsWith('RECYCLE_BIN') ? directory.replace('RECYCLE_BIN', RCYB_DIR) : directory.replace('.', path.join(USER_DIR, username));
     
@@ -84,14 +78,7 @@ function getDirInfoControl(req, res) {
     });
 }
 
-function uploadControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('SESSION_EXPIRED');
-        return;
-    }
-
+function uploadControl(req, res, username) {
     const directory = req.headers['x-directory-path'];
     const uploadDir = directory.replace('.', path.join(USER_DIR, username));
     if (!fs.existsSync(uploadDir)) {
@@ -162,14 +149,7 @@ function uploadControl(req, res) {
     });
 }
 
-function downloadControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('SESSION_EXPIRED');
-        return;
-    }
-
+function downloadControl(req, res, username) {
     const directory = decodeURIComponent(req.headers['x-directory-path']);
     const filenames = decodeURIComponent(req.headers['x-files']);
     const pathdir   = directory.replace('.', path.join(USER_DIR, username));
@@ -213,14 +193,7 @@ function downloadControl(req, res) {
     res.end('DOWNLOAD_ERR');
 }
 
-function createFolderControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('SESSION_EXPIRED');
-        return;
-    }
-
+function createFolderControl(req, res, username) {
     const directory = req.headers['x-directory-path'];
     const dirname   = req.headers['x-directory-name'];
     const pathdir   = directory.replace('.', path.join(USER_DIR, username));
@@ -238,14 +211,7 @@ function createFolderControl(req, res) {
     res.end('CREATE_OK');
 }
 
-function recoveryBinControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('SESSION_EXPIRED');
-        return;
-    }
-
+function recoveryBinControl(req, res, username) {
     const files     = decodeURIComponent(req.headers['x-files']);
     const filenames = files.split(',');
     
@@ -270,14 +236,7 @@ function recoveryBinControl(req, res) {
     res.end('RECOVERY_OK');
 }
 
-function recycleBinControl(req, res) {
-    const username  = findUsernameBySessionId(req);
-    if (!username) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('SESSION_EXPIRED');
-        return;
-    }
-
+function recycleBinControl(req, res, username) {
     const directory = decodeURIComponent(req.headers['x-directory-path']);
     const files     = decodeURIComponent(req.headers['x-files']);
 
@@ -427,6 +386,7 @@ module.exports = {
     recycleBinControl,
     recoveryBinControl,
     createFolderControl,
+    findUsernameBySessionId,
     getDirInfoControl,
     downloadControl,
     uploadControl,

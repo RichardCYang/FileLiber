@@ -92,6 +92,7 @@ const server = http.createServer((req, res) => {
     }
 
     options.resourcePath = path.join(path.join(__dirname, 'client'), url);
+    options.username = controllers.findUsernameBySessionId(req);
 
     if (url === '/') {
         const cookies = cookie.parse(req.headers.cookie || '');
@@ -101,46 +102,27 @@ const server = http.createServer((req, res) => {
             options.resourcePath = path.join(path.join(__dirname, 'client'), 'index.html');
     }
 
-    switch (url) {
-        case '/login.do':
-            controllers.loginControl(req, res);
-            return;
+    const controller_group = [];
+    controller_group.push({url: '/login.do', callback: controllers.loginControl});
+    controller_group.push({url: '/logout.do', callback: controllers.logoutControl});
+    controller_group.push({url: '/register.do', callback: controllers.registerControl});
+    controller_group.push({url: '/flushbin', callback: controllers.flushBinControl, sessioncheck: true});
+    controller_group.push({url: '/recyclebin', callback: controllers.recycleBinControl, sessioncheck: true, passusername: true});
+    controller_group.push({url: '/recoverybin', callback: controllers.recoveryBinControl, sessioncheck: true, passusername: true});
+    controller_group.push({url: '/createfolder', callback: controllers.createFolderControl, sessioncheck: true, passusername: true});
+    controller_group.push({url: '/download', callback: controllers.downloadControl, sessioncheck: true, passusername: true});
+    controller_group.push({url: '/upload', callback: controllers.uploadControl, sessioncheck: true, passusername: true});
+    controller_group.push({url: '/getdirinfo', callback: controllers.getDirInfoControl, sessioncheck: true, passusername: true});
 
-        case '/logout.do':
-            controllers.logoutControl(req, res);
+    for (let i = 0; i < controller_group.length; i++) {
+        const controller_info = controller_group[i];
+        if (controller_info.url === url) {
+            if (controller_info.callback) {
+                if (controller_info.sessioncheck && !options.username) return;
+                controller_info.callback(req, res, options.username);
+            }
             return;
-
-        case '/register.do':
-            controllers.registerControl(req, res);
-            return;
-
-        case '/flushbin':
-            controllers.flushBinControl(req, res);
-            return;
-
-        case '/recyclebin':
-            controllers.recycleBinControl(req, res);
-            return;
-
-        case '/recoverybin':
-            controllers.recoveryBinControl(req, res);
-            return;
-
-        case '/createfolder':
-            controllers.createFolderControl(req, res);
-            return;
-
-        case '/download':
-            controllers.downloadControl(req, res);
-            return;
-
-        case '/upload':
-            controllers.uploadControl(req, res);
-            return;
-
-        case '/getdirinfo':
-            controllers.getDirInfoControl(req, res);
-            return;
+        }
     }
 
     fs.stat(options.resourcePath, (err, stats) => {
