@@ -109,6 +109,20 @@ function flushBin(entries) {
     }
 }
 
+function recoveryBin(entries) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/recoverybin', true);
+    xhr.setRequestHeader('X-Files', encodeURIComponent(makeStringArrayToCommaString(entries)));
+    xhr.send();
+
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+            if (xhr.responseText === 'RECOVERY_OK')
+                refreshCurrentDirPage();
+        }
+    }
+}
+
 function recycleBin(entries) {
     const xhr  = new XMLHttpRequest();
     xhr.open('POST', '/recyclebin', true);
@@ -310,7 +324,7 @@ function addFile(name, type, size, created, modified, isSelected) {
     const fileCHBX = document.createElement('i');
     const icon = matchIcon(type, name);
     fileIcon.innerHTML = icon;
-    fileName.innerHTML = name;
+    fileName.innerHTML = name.indexOf('_HSH_') > -1 ? name.split('_HSH_')[0] : name;
     fileCHBX.innerHTML = isSelected ? '☑️' : '🔲';
     fileCHBX.classList.add('file-grid-checkbox');
     fileItem.checkbox  = fileCHBX;
@@ -361,7 +375,7 @@ function addFile(name, type, size, created, modified, isSelected) {
 
 function showDetails(name, type, bytesizes, created, modified) {
     const detailsSidebar = document.getElementById('detailsSidebar');
-    document.getElementById('fileName').textContent = name;
+    document.getElementById('fileName').textContent = name.indexOf('_HSH_') > -1 ? name.split('_HSH_')[0] : name;
     document.getElementById('fileType').textContent = type === 'folder' ? 'Folder' : 'File';
     document.getElementById('fileCreated').textContent = dateToLocalTime(new Date(created));
     document.getElementById('fileModified').textContent = dateToLocalTime(new Date(modified));

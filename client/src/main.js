@@ -141,6 +141,23 @@ btn_recycle_bin.addEventListener('click', (e) => {
     refreshCurrentDirPage();
 });
 
+btn_recovery.addEventListener('click', (e) => {
+    const fileItems     = document.querySelectorAll('.file-grid-item');
+    const selectedItems = [];
+
+    for (let i = 0; i < fileItems.length; i++) {
+        if (fileItems[i].selected)
+            selectedItems.push(fileItems[i].fileName);
+    }
+
+    if (selectedItems.length == 0) {
+        createMessageDialog('알림', '선택된 항목이 없습니다');
+        return;
+    }
+
+    recoveryBin(selectedItems);
+});
+
 btn_logout.addEventListener('click', (e) => {
     logout();
 });

@@ -122,6 +122,10 @@ const server = http.createServer((req, res) => {
             controllers.recycleBinControl(req, res);
             return;
 
+        case '/recoverybin':
+            controllers.recoveryBinControl(req, res);
+            return;
+
         case '/createfolder':
             controllers.createFolderControl(req, res);
             return;

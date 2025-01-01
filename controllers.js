@@ -21,6 +21,38 @@ function findUsernameBySessionId(req) {
     return null;
 }
 
+function traversalSubPathSync(dir) {
+    let subdirs = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    entries.forEach(entry => {
+        if (entry.isDirectory()) {
+            const fullPath = path.resolve(dir, entry.name);
+            subdirs.push(fullPath);
+
+            const nestedDirs = traversalSubPathSync(fullPath);
+            subdirs = subdirs.concat(nestedDirs);
+        }
+    });
+
+    return subdirs;
+}
+
+function matchSubPathByHash(dir, username, hash) {
+    const dirs = traversalSubPathSync(dir);
+    dirs.push(dir);
+
+    for (let i = 0; i < dirs.length; i++) {
+        const dir = dirs[i].replace(path.join(USER_DIR, username), '.').replaceAll('\\', '/');
+        const hsh = crypto.createHash('md5').update(dir).digest('hex');
+
+        if (hsh === hash)
+            return dir;
+    }
+
+    return null;
+}
+
 function getDirInfoControl(req, res) {
     const username  = findUsernameBySessionId(req);
     if (!username) {
@@ -206,6 +238,38 @@ function createFolderControl(req, res) {
     res.end('CREATE_OK');
 }
 
+function recoveryBinControl(req, res) {
+    const username  = findUsernameBySessionId(req);
+    if (!username) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('SESSION_EXPIRED');
+        return;
+    }
+
+    const files     = decodeURIComponent(req.headers['x-files']);
+    const filenames = files.split(',');
+    
+    for (let i = 0; i < filenames.length; i++) {
+        if (filenames[i].indexOf('_HSH_') < 0)
+            continue;
+
+        const sidx = filenames[i].indexOf('_HSH_');
+        const hash = filenames[i].substring(sidx + 5);
+        const match = matchSubPathByHash(path.join(USER_DIR, username), username, hash);
+        if (match) {
+            const targetPath = match.replace('.', path.join(USER_DIR, username));
+            fs.rename(path.join(RCYB_DIR, filenames[i]), path.join(targetPath, filenames[i].substring(0, sidx)), (err) => {
+                if (err) {
+                    return;
+                }
+            });
+        }
+    }
+
+    res.writeHead(200, { 'Content-Type' : 'text/plain'});
+    res.end('RECOVERY_OK');
+}
+
 function recycleBinControl(req, res) {
     const username  = findUsernameBySessionId(req);
     if (!username) {
@@ -361,6 +425,7 @@ module.exports = {
     registerControl,
     flushBinControl,
     recycleBinControl,
+    recoveryBinControl,
     createFolderControl,
     getDirInfoControl,
     downloadControl,
