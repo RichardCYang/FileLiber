@@ -29,7 +29,7 @@ function getDirInfoControl(req, res) {
     }
 
     const directory = decodeURIComponent(req.headers['x-directory-path']);
-    const workpath  = directory === 'RECYCLE_BIN' ? RCYB_DIR : directory.replace('.', path.join(USER_DIR, username));
+    const workpath  = directory.startsWith('RECYCLE_BIN') ? directory.replace('RECYCLE_BIN', RCYB_DIR) : directory.replace('.', path.join(USER_DIR, username));
     
     fs.readdir(workpath, { withFileTypes: true }, (err, entries) => {
         if (err) {

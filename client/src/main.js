@@ -5,9 +5,11 @@ const btn_add_folder    = document.querySelector('#btnAddFolder');
 const btn_select        = document.querySelector('#btnSelect');
 const btn_all_select    = document.querySelector('#btnAllSelect');
 const btn_remove        = document.querySelector('#btnRemove');
+const btn_upload        = document.querySelector('#btnUpload');
 const btn_donwload      = document.querySelector('#btnDownload');
 const btn_all_files     = document.querySelector('#btnHome');
 const btn_recycle_bin   = document.querySelector('#btnTrash');
+const btn_recovery      = document.querySelector('#btnRecovery');
 const btn_logout        = document.querySelector('#btnLogout');
 
 main_area.addEventListener('dragover', (e) => {
@@ -121,7 +123,10 @@ btn_all_files.addEventListener('click', (e) => {
     userinfo.currentPath    = '.';
     userinfo.selectionMode  = false;
     btn_select.classList.remove('menubar-button-toggle-active');
-    btn_add_folder.style.removeProperty('display');
+    btn_add_folder.classList.remove('hide');
+    btn_donwload.classList.remove('hide');
+    btn_upload.classList.remove('hide');
+    btn_recovery.classList.add('hide');
     refreshCurrentDirPage();
 });
 
@@ -129,7 +134,10 @@ btn_recycle_bin.addEventListener('click', (e) => {
     userinfo.currentPath    = 'RECYCLE_BIN';
     userinfo.selectionMode  = false;
     btn_select.classList.remove('menubar-button-toggle-active');
-    btn_add_folder.style.setProperty('display', 'none', 'important');
+    btn_add_folder.classList.add('hide');
+    btn_donwload.classList.add('hide');
+    btn_upload.classList.add('hide');
+    btn_recovery.classList.remove('hide');
     refreshCurrentDirPage();
 });
 

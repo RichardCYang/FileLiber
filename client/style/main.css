@@ -253,6 +253,10 @@ h2 {
     background-color: #a4cce3;
 }
 
+.hide {
+    display: none;
+}
+
 @media (max-width: 900px) {
     .menubar {
         height: 81px;
