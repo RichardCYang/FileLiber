@@ -1,8 +1,15 @@
-const btn_login = document.querySelector('#btnLogin');
+const btn_login     = document.querySelector('#btnLogin');
+const pw_password   = document.querySelector('#pwPassword');
+const txt_username  = document.querySelector('#txtUsername');
+
+txt_username.focus();
+
+pw_password.addEventListener('keydown', (e) => {
+    if (e.key === "Enter")
+        btn_login.click();
+});
 
 btn_login.addEventListener('click', (e) => {
-    const txt_username  = document.querySelector('#txtUsername');
-    const pw_password   = document.querySelector('#pwPassword');
     const hs_password   = sha512(pw_password.value);
 
     const xhr = new XMLHttpRequest();
