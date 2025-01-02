@@ -9,9 +9,8 @@ const controllers = require('./controllers');
 const dbmanager   = require('./dbmanager');
 
 // 메인 서버 설정
-const PORT = 3000;
-const HOST = '127.0.0.1';
-const MYSQL_CONFIG = {};
+const SERVER_CONFIG = {};
+const MYSQL_CONFIG  = {};
 
 // 초기 사용자 정보 폴더 및 휴지통 폴더 확인 -> 없으면 기본 생성
 if (!fs.existsSync(path.join(__dirname, 'users')))
@@ -26,7 +25,9 @@ if (!fs.existsSync(path.join(__dirname, '.env'))) {
     defaultCtx.push('MYSQL_HOST=\n');
     defaultCtx.push('MYSQL_USER=\n');
     defaultCtx.push('MYSQL_PASSWORD=\n');
-    defaultCtx.push('MYSQL_DATABASE=');
+    defaultCtx.push('MYSQL_DATABASE=\n');
+    defaultCtx.push('SERVER_PORT=\n');
+    defaultCtx.push('SERVER_HOST=');
     try {
         fs.writeFileSync(path.join(__dirname, '.env'), defaultCtx.join(''), { encoding: 'utf8' });
         utils.printLog('INFO', 'The .env file has been successfully created.');
@@ -54,6 +55,8 @@ if (!fs.existsSync(path.join(__dirname, '.env'))) {
         MYSQL_CONFIG.USER       = envConfig['MYSQL_USER'];
         MYSQL_CONFIG.PASSWORD   = envConfig['MYSQL_PASSWORD'];
         MYSQL_CONFIG.DATABASE   = envConfig['MYSQL_DATABASE'];
+        SERVER_CONFIG.HOST      = envConfig['SERVER_HOST'];
+        SERVER_CONFIG.PORT      = parseInt(envConfig['SERVER_PORT']);
 
         if (!MYSQL_CONFIG.HOST || MYSQL_CONFIG.HOST === '') {
             utils.printLog('ERROR', 'The `MYSQL_HOST` field is empty.');
@@ -72,6 +75,16 @@ if (!fs.existsSync(path.join(__dirname, '.env'))) {
 
         if (!MYSQL_CONFIG.DATABASE || MYSQL_CONFIG.DATABASE === '') {
             utils.printLog('ERROR', 'The `MYSQL_DATABASE` field is empty.');
+            process.exit(0);
+        }
+
+        if (!SERVER_CONFIG.HOST || SERVER_CONFIG.HOST === '') {
+            utils.printLog('ERROR', 'The `SERVER_HOST` field is empty.');
+            process.exit(0);
+        }
+
+        if (isNaN(SERVER_CONFIG.PORT)) {
+            utils.printLog('ERROR', 'The `SERVER_PORT` field is empty.');
             process.exit(0);
         }
     } catch (error) {
@@ -156,6 +169,6 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, HOST, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
+server.listen(SERVER_CONFIG.PORT, SERVER_CONFIG.HOST, () => {
+    console.log(`Server running on http://${SERVER_CONFIG.HOST}:${SERVER_CONFIG.PORT}`);
 });
