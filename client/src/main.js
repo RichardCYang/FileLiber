@@ -25,14 +25,19 @@ main_area.addEventListener('drop', async(e) => {
         const items = e.dataTransfer.items;
         const onlyfiles = [];
         const dirfiles = [];
-        for (let i = 0; i < items.length; i++) {
-            const entry = items[i].webkitGetAsEntry();
+        const entries = [];
+
+        for (let i = 0; i < items.length; i++)
+            entries.push(items[i].webkitGetAsEntry());
+
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
             if (entry.isDirectory) {
                 const subfiles = await traverseDirectoryAsync(entry);
                 for (let i = 0; i < subfiles.length; i++)
                     dirfiles.push(subfiles[i]);
             } else {
-                onlyfiles.push(items[i].getAsFile());
+                onlyfiles.push(await getFileAsync(entry));
             }
         }
 
