@@ -26,7 +26,7 @@ FileLiber는 효율적이고 사용하기 쉬운 원격 파일 관리 웹앱 소
 ```bash
 # 리포지토리 클론
 $ git clone https://github.com/RichardCYang/FileLiber.git
-$ cd fileliber
+$ cd FileLiber
 
 # 의존성 설치
 $ npm install
@@ -47,6 +47,8 @@ MYSQL_HOST=서버주소
 MYSQL_USER=사용자명
 MYSQL_PASSWORD=비밀번호
 MYSQL_DATABASE=DB명
+SERVER_PORT=서버포트
+SERVER_HOST=서버호스트
 ```
 
 ### 3. 실행
