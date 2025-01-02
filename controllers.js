@@ -88,12 +88,6 @@ function uploadControl(req, res, username) {
     if (!fs.existsSync(path.join(USER_DIR, username)))
         fs.mkdirSync(path.join(USER_DIR, username));
 
-    if (!fs.existsSync(uploadDir)) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('DIRECTORY_NOTFOUND');
-        return;
-    }
-
     const boundary  = Buffer.from(`--${req.headers['content-type'].split('boundary=')[1]}`);
     const buffers   = [];
 
