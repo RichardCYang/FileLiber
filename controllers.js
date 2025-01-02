@@ -81,6 +81,13 @@ function getDirInfoControl(req, res, username) {
 function uploadControl(req, res, username) {
     const directory = req.headers['x-directory-path'];
     const uploadDir = directory.replace('.', path.join(USER_DIR, username));
+
+    if (!fs.existsSync(USER_DIR))
+        fs.mkdirSync(USER_DIR);
+
+    if (!fs.existsSync(path.join(USER_DIR, username)))
+        fs.mkdirSync(path.join(USER_DIR, username));
+
     if (!fs.existsSync(uploadDir)) {
         res.writeHead(400, { 'Content-Type': 'text/plain' });
         res.end('DIRECTORY_NOTFOUND');
