@@ -167,7 +167,7 @@ function downloadFile(files) {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = xhr.getResponseHeader('X-Download-Filename');
+            a.download = decodeURIComponent(xhr.getResponseHeader('X-Download-Filename'));
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

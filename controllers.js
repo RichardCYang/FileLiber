@@ -167,9 +167,9 @@ function downloadControl(req, res, username) {
         // 다운 받을 파일이 하나면, 해당 파일만 다운로드 진행
         if (fs.existsSync(path.join(pathdir, files[0]))) {
             res.writeHead(200, {
-                'Content-Disposition': 'attachment; filename="' + files[0] + '"',
+                'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
                 'Content-Type': 'application/octet-stream',
-                'X-Download-Filename': files[0],
+                'X-Download-Filename': encodeURIComponent(files[0]),
             });
 
             const rstream = fs.createReadStream(path.join(pathdir, files[0]));
