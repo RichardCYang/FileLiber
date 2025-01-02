@@ -1,5 +1,6 @@
 const dbmanager = require('./dbmanager');
 const tarlib    = require('./tarlib');
+const crypto    = require('crypto');
 const cookie    = require('cookie');
 const path      = require('path');
 const fs        = require('fs');
@@ -240,6 +241,7 @@ function recoveryBinControl(req, res, username) {
 function recycleBinControl(req, res, username) {
     const directory = decodeURIComponent(req.headers['x-directory-path']);
     const files     = decodeURIComponent(req.headers['x-files']);
+    const hash      = crypto.createHash('md5').update(directory).digest('hex');
 
     const currentpath   = directory.replace('.', path.join(USER_DIR, username));
     const movepath      = path.join(__dirname, 'recyclebin');
@@ -247,7 +249,7 @@ function recycleBinControl(req, res, username) {
     const filenames = files.split(',');
     const doneflags = [];
     for (let i = 0; i < filenames.length; i++) {
-        fs.rename(path.join(currentpath, filenames[i]), path.join(movepath, filenames[i]), (err) => {
+        fs.rename(path.join(currentpath, filenames[i]), path.join(movepath, filenames[i] + '_HSH_' + hash), (err) => {
             if (err) {
                 doneflags.push(false);
                 return;
