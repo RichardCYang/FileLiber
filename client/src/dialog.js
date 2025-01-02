@@ -53,6 +53,7 @@ function createDialog(headerText, placeholderText, onSubmit) {
     inputField.type = 'text';
     inputField.className = 'dialog-input';
     inputField.placeholder = placeholderText;
+    inputField.focus();
 
     body.appendChild(inputField);
 
@@ -66,6 +67,11 @@ function createDialog(headerText, placeholderText, onSubmit) {
         const value = inputField.value;
         onSubmit(value);
         document.body.removeChild(overlay);
+    };
+
+    inputField.onkeydown = function (e) {
+        if (e.key === "Enter")
+            submitButton.click();
     };
 
     const cancelButton = document.createElement('button');
