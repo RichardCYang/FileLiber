@@ -48,6 +48,20 @@ body {
     font-size: 14px;
 }
 
+.dialog-progress-border {
+    height: 32px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.dialog-progress-bar {
+    background: skyblue;
+    width: 0px;
+    height: 100%;
+    position: relative;
+}
+
 .dialog-buttons {
     display: flex;
     justify-content: space-between;

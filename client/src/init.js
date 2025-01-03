@@ -161,9 +161,18 @@ function downloadFile(files) {
     xhr.setRequestHeader('X-Files', encodeURIComponent(makeStringArrayToCommaString(files)));
     xhr.send();
 
-    createProgressDialog('파일 다운로드 중..', () => {
+    const progressbar = createProgressDialog('파일 다운로드 중..', () => {
         // 파일 다운로드 취소 처리
     });
+
+    xhr.onprogress = (e) => {
+        if (e.lengthComputable) {
+            const total = e.total;
+            const loaded = e.loaded;
+            const percent = Math.round((loaded / total) * 100);
+            progressbar.setCurrentRate(percent);
+        }
+    }
 
     xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status === 200) {

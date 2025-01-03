@@ -50,9 +50,15 @@ function createProgressDialog(headerText, onCancel) {
     body.className = 'dialog-body';
 
     const progressborder = document.createElement('div');
-    progressborder.type = 'text';
-    progressborder.className = 'dialog-input';
+    progressborder.className = 'dialog-progress-border';
 
+    const progressbar = document.createElement('div');
+    progressbar.className = 'dialog-progress-bar';
+    progressbar.setCurrentRate = (rate) => {
+        progressbar.style.width = rate + '%';
+    };
+
+    progressborder.appendChild(progressbar);
     body.appendChild(progressborder);
 
     const buttonContainer = document.createElement('div');
@@ -74,6 +80,7 @@ function createProgressDialog(headerText, onCancel) {
     overlay.appendChild(dialogBox);
 
     document.body.appendChild(overlay);
+    return progressbar;
 }
 
 function createDialog(headerText, placeholderText, onSubmit) {
