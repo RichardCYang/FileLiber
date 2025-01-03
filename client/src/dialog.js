@@ -35,6 +35,47 @@ function createMessageDialog(headerText, messageText, onClose) {
     document.body.appendChild(overlay);
 }
 
+function createProgressDialog(headerText, onCancel) {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+
+    const dialogBox = document.createElement('div');
+    dialogBox.className = 'dialog-box';
+
+    const header = document.createElement('div');
+    header.className = 'dialog-header';
+    header.textContent = headerText;
+
+    const body = document.createElement('div');
+    body.className = 'dialog-body';
+
+    const progressborder = document.createElement('div');
+    progressborder.type = 'text';
+    progressborder.className = 'dialog-input';
+
+    body.appendChild(progressborder);
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'dialog-buttons';
+
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'dialog-button secondary';
+    cancelButton.textContent = 'Cancel';
+    cancelButton.onclick = function () {
+        document.body.removeChild(overlay);
+    };
+
+    buttonContainer.appendChild(cancelButton);
+
+    dialogBox.appendChild(header);
+    dialogBox.appendChild(body);
+    dialogBox.appendChild(buttonContainer);
+
+    overlay.appendChild(dialogBox);
+
+    document.body.appendChild(overlay);
+}
+
 function createDialog(headerText, placeholderText, onSubmit) {
     const overlay = document.createElement('div');
     overlay.className = 'dialog-overlay';

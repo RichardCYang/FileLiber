@@ -161,6 +161,10 @@ function downloadFile(files) {
     xhr.setRequestHeader('X-Files', encodeURIComponent(makeStringArrayToCommaString(files)));
     xhr.send();
 
+    createProgressDialog('파일 다운로드 중..', () => {
+        // 파일 다운로드 취소 처리
+    });
+
     xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status === 200) {
             const blob = new Blob([xhr.response]);

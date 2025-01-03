@@ -183,7 +183,7 @@ function downloadControl(req, res, username) {
                     'Content-Type': 'application/octet-stream',
                     'X-Download-Filename': encodeURIComponent(files[0]),
                 });
-                rstream.pipe(fs.createReadStream(path.join(pathdir, files[0])));
+                fs.createReadStream(path.join(pathdir, files[0])).pipe(res);
             }
             return;
         }
