@@ -5,7 +5,9 @@ const cookie    = require('cookie');
 const path      = require('path');
 const fs        = require('fs');
 
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 }  = require('uuid');
+const { PassThrough } = require('stream');
+
 const sessions = [];
 
 const USER_DIR = path.join(__dirname, 'users');
@@ -166,36 +168,83 @@ function downloadControl(req, res, username) {
     if (files.length == 1) {
         // 다운 받을 파일이 하나면, 해당 파일만 다운로드 진행
         if (fs.existsSync(path.join(pathdir, files[0]))) {
-            const stat      = fs.statSync(path.join(pathdir, files[0]));
-            const archive   = archiver('zip', { zlib: { level: 9 } });
+            const stat          = fs.statSync(path.join(pathdir, files[0]));
+            const archive       = archiver('zip', { zlib: { level: 9 } });
+            
             if (stat.isDirectory()) {
-                res.writeHead(200, {
-                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.zip') + '"',
-                    'Content-Type': 'application/zip',
-                    'X-Download-Filename': encodeURIComponent(files[0] + '.zip'),
+                const memoryStream  = new PassThrough();
+                const memoryChunks  = [];
+
+                memoryStream.on('data', (chunk) => {
+                    memoryChunks.push(chunk);
                 });
-                archive.pipe(res);
+
+                memoryStream.on('end', () => {
+                    const buffer = Buffer.concat(memoryChunks);
+                    res.writeHead(200, {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Expose-Headers': 'Content-Length',
+                        'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.zip') + '"',
+                        'Content-Length': buffer.length,
+                        'Content-Type': 'application/zip',
+                        'X-Download-Filename': encodeURIComponent(files[0] + '.zip'),
+                    });
+                    res.end(buffer);
+                });
+
+                archive.pipe(memoryStream);
                 archive.directory(path.join(pathdir, files[0]), false);
                 archive.finalize();
             } else if (stat.isFile()) {
-                res.writeHead(200, {
-                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
-                    'Content-Type': 'application/octet-stream',
-                    'X-Download-Filename': encodeURIComponent(files[0]),
+                const memoryStream  = new PassThrough();
+                const memoryChunks  = [];
+
+                memoryStream.on('data', (chunk) => {
+                    memoryChunks.push(chunk);
                 });
-                fs.createReadStream(path.join(pathdir, files[0])).pipe(res);
+
+                memoryStream.on('end', () => {
+                    const buffer = Buffer.concat(memoryChunks);
+                    res.writeHead(200, {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Expose-Headers': 'Content-Length',
+                        'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
+                        'Content-Length': buffer.length,
+                        'Content-Type': 'application/octet-stream',
+                        'X-Download-Filename': encodeURIComponent(files[0]),
+                    });
+                    res.end(buffer);
+                });
+
+                fs.createReadStream(path.join(pathdir, files[0])).pipe(memoryStream);
             }
             return;
         }
     } else if (files.length > 1) {
         // 다운 받을 파일이 여러개면, 해당 파일들을 전부 ZIP 포맷으로 압축하여 다운로드 진행
-        const archive = archiver('zip', { zlib: { level: 9 } });
-        res.writeHead(200, {
-            'Content-Disposition': 'attachment; filename="archive.zip"',
-            'Content-Type': 'application/zip',
-            'X-Download-Filename': 'archive.zip',
+        const archive       = archiver('zip', { zlib: { level: 9 } });
+        const memoryStream  = new PassThrough();
+        const memoryChunks  = [];
+
+        memoryStream.on('data', (chunk) => {
+            memoryChunks.push(chunk);
         });
-        archive.pipe(res);
+
+        memoryStream.on('end', () => {
+            const buffer = Buffer.concat(memoryChunks);
+            res.writeHead(200, {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Expose-Headers': 'Content-Length',
+                'Content-Disposition': 'attachment; filename="archive.zip"',
+                'Content-Length': buffer.length,
+                'Content-Type': 'application/zip',
+                'X-Download-Filename': 'archive.zip',
+            });
+            res.end(buffer);
+        });
+
+        archive.pipe(memoryStream);
+
         for (let i = 0; i < files.length; i++) {
             const stat = fs.statSync(path.join(pathdir, files[i]));
             if (stat.isDirectory())
@@ -203,6 +252,7 @@ function downloadControl(req, res, username) {
             else if (stat.isFile())
                 archive.file(path.join(pathdir, files[i]), { name:files[i] });
         }
+        
         archive.finalize();
         return;
     }
