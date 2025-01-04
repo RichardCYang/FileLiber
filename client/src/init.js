@@ -171,6 +171,9 @@ function downloadFile(files) {
             const loaded = e.loaded;
             const percent = Math.round((loaded / total) * 100);
             progressbar.setCurrentRate(percent);
+        } else {
+            if (xhr.responseText.indexOf('Progress') > -1)
+                progressbar.setCurrentRate(parseInt(xhr.responseText.split(':')[1].trim()));
         }
     }
 

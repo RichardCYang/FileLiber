@@ -12,45 +12,6 @@ const sessions = [];
 const USER_DIR = path.join(__dirname, 'users');
 const RCYB_DIR = path.join(__dirname, 'recyclebin');
 
-function getFolderData(dirPath) {
-    let totalSize = 0;
-    let fileCount = 0;
-    let totalNameLength = 0;
-
-    const files = fs.readdirSync(dirPath);
-    files.forEach(file => {
-        const filePath = path.join(dirPath, file);
-        const stats = fs.statSync(filePath);
-
-        if (stats.isDirectory()) {
-            const subFolderData = getFolderData(filePath);
-            totalSize += subFolderData.totalSize;
-            fileCount += subFolderData.fileCount;
-            totalNameLength += subFolderData.totalNameLength;
-        } else {
-            totalSize += stats.size;
-            fileCount += 1;
-            totalNameLength += file.length;
-        }
-    });
-
-    return { totalSize, fileCount, totalNameLength };
-}
-
-function calculateHeaderSize(fileCount, totalNameLength) {
-    const baseHeaderSize = 30;
-    const nameHeaderSize = totalNameLength;
-    const endOfCentralDirSize = 22;
-
-    return fileCount * baseHeaderSize + nameHeaderSize + endOfCentralDirSize;
-}
-
-function calculateZipSize(folderPath) {
-    const folderData = getFolderData(folderPath);
-    const headerSize = calculateHeaderSize(folderData.fileCount, folderData.totalNameLength);
-    return folderData.totalSize + headerSize;
-}
-
 function findUsernameBySessionId(req) {
     const cookies = cookie.parse(req.headers.cookie || '');
     if (cookies.sessionId) {
@@ -207,16 +168,19 @@ function downloadControl(req, res, username) {
         // 다운 받을 파일이 하나면, 해당 파일만 다운로드 진행
         if (fs.existsSync(path.join(pathdir, files[0]))) {
             const stat      = fs.statSync(path.join(pathdir, files[0]));
-            const archive   = archiver('zip', { store: true });
+            const archive   = archiver('zip', { zlib: { level: 9 } });
             
             if (stat.isDirectory()) {
+                res.setHeader('Transfer-Encoding', 'chunked');
                 res.writeHead(200, {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Expose-Headers': 'Content-Length',
-                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.tar') + '"',
-                    'Content-Length': calculateZipSize(path.join(pathdir, files[0])),
-                    'Content-Type': 'application/x-tar',
-                    'X-Download-Filename': encodeURIComponent(files[0] + '.tar'),
+                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.zip') + '"',
+                    'Content-Type': 'application/zip',
+                    'X-Download-Filename': encodeURIComponent(files[0] + '.zip'),
+                });
+
+                archive.on('progress', (progress) => {
+                    const percentage = (progress.entries.processed / progress.entries.total) * 100;
+                    res.write(`Progress: ${percentage}\n`);
                 });
 
                 archive.pipe(res);
@@ -238,20 +202,18 @@ function downloadControl(req, res, username) {
         }
     } else if (files.length > 1) {
         // 다운 받을 파일이 여러개면, 해당 파일들을 전부 TAR 포맷으로 압축하여 다운로드 진행
-        const archive = archiver('zip', { store: true });
-        const info = {};
-        info.totalsize = 0;
-
-        for (let i = 0; i < files.length; i++)
-            info.totalsize += calculateZipSize(path.join(pathdir, files[i]));
-
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        
+        res.setHeader('Transfer-Encoding', 'chunked');
         res.writeHead(200, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Expose-Headers': 'Content-Length',
-            'Content-Disposition': 'attachment; filename="archive.tar"',
-            'Content-Length': info.totalsize,
-            'Content-Type': 'application/x-tar',
-            'X-Download-Filename': 'archive.tar',
+            'Content-Disposition': 'attachment; filename="archive.zip"',
+            'Content-Type': 'application/zip',
+            'X-Download-Filename': 'archive.zip',
+        });
+
+        archive.on('progress', (progress) => {
+            const percentage = (progress.entries.processed / progress.entries.total) * 100;
+            res.write(`Progress: ${percentage}\n`);
         });
 
         archive.pipe(res);
