@@ -6,12 +6,37 @@ const path      = require('path');
 const fs        = require('fs');
 
 const { v4: uuidv4 }  = require('uuid');
-const { PassThrough } = require('stream');
 
 const sessions = [];
 
 const USER_DIR = path.join(__dirname, 'users');
 const RCYB_DIR = path.join(__dirname, 'recyclebin');
+
+function calculateDirSize(filePath) {
+    const stats = fs.statSync(filePath);
+
+    if (stats.isFile()) {
+        const fileSize = stats.size;
+        const paddedSize = Math.ceil(fileSize / 512) * 512;
+        return 512 + paddedSize;
+    }
+
+    if (stats.isDirectory()) {
+        const entries = fs.readdirSync(filePath);
+        let totalSize = 512;
+        entries.forEach((entry) => {
+            totalSize += calculateDirSize(path.join(filePath, entry));
+        });
+        return totalSize;
+    }
+
+    return 0;
+}
+
+function calculateTarSize(targetPath) {
+    const totalSize = calculateDirSize(targetPath);
+    return totalSize;
+}  
 
 function findUsernameBySessionId(req) {
     const cookies = cookie.parse(req.headers.cookie || '');
@@ -168,82 +193,55 @@ function downloadControl(req, res, username) {
     if (files.length == 1) {
         // 다운 받을 파일이 하나면, 해당 파일만 다운로드 진행
         if (fs.existsSync(path.join(pathdir, files[0]))) {
-            const stat          = fs.statSync(path.join(pathdir, files[0]));
-            const archive       = archiver('zip', { zlib: { level: 9 } });
+            const stat      = fs.statSync(path.join(pathdir, files[0]));
+            const archive   = archiver('tar');
             
             if (stat.isDirectory()) {
-                const memoryStream  = new PassThrough();
-                const memoryChunks  = [];
-
-                memoryStream.on('data', (chunk) => {
-                    memoryChunks.push(chunk);
+                res.writeHead(200, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Expose-Headers': 'Content-Length',
+                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.tar') + '"',
+                    'Content-Length': calculateTarSize(path.join(pathdir, files[0])),
+                    'Content-Type': 'application/x-tar',
+                    'X-Download-Filename': encodeURIComponent(files[0] + '.tar'),
                 });
 
-                memoryStream.on('end', () => {
-                    const buffer = Buffer.concat(memoryChunks);
-                    res.writeHead(200, {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Expose-Headers': 'Content-Length',
-                        'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.zip') + '"',
-                        'Content-Length': buffer.length,
-                        'Content-Type': 'application/zip',
-                        'X-Download-Filename': encodeURIComponent(files[0] + '.zip'),
-                    });
-                    res.end(buffer);
-                });
-
-                archive.pipe(memoryStream);
+                archive.pipe(res);
                 archive.directory(path.join(pathdir, files[0]), false);
                 archive.finalize();
             } else if (stat.isFile()) {
-                const memoryStream  = new PassThrough();
-                const memoryChunks  = [];
-
-                memoryStream.on('data', (chunk) => {
-                    memoryChunks.push(chunk);
+                res.writeHead(200, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Expose-Headers': 'Content-Length',
+                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
+                    'Content-Length': stat.size,
+                    'Content-Type': 'application/octet-stream',
+                    'X-Download-Filename': encodeURIComponent(files[0]),
                 });
 
-                memoryStream.on('end', () => {
-                    const buffer = Buffer.concat(memoryChunks);
-                    res.writeHead(200, {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Expose-Headers': 'Content-Length',
-                        'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
-                        'Content-Length': buffer.length,
-                        'Content-Type': 'application/octet-stream',
-                        'X-Download-Filename': encodeURIComponent(files[0]),
-                    });
-                    res.end(buffer);
-                });
-
-                fs.createReadStream(path.join(pathdir, files[0])).pipe(memoryStream);
+                fs.createReadStream(path.join(pathdir, files[0])).pipe(res);
             }
             return;
         }
     } else if (files.length > 1) {
-        // 다운 받을 파일이 여러개면, 해당 파일들을 전부 ZIP 포맷으로 압축하여 다운로드 진행
-        const archive       = archiver('zip', { zlib: { level: 9 } });
-        const memoryStream  = new PassThrough();
-        const memoryChunks  = [];
+        // 다운 받을 파일이 여러개면, 해당 파일들을 전부 TAR 포맷으로 압축하여 다운로드 진행
+        const archive = archiver('tar');
+        const info = {};
+        info.totalsize = 0;
 
-        memoryStream.on('data', (chunk) => {
-            memoryChunks.push(chunk);
+        for (let i = 0; i < files.length; i++)
+            info.totalsize += calculateTarSize(path.join(pathdir, files[i]));
+
+        res.writeHead(200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Expose-Headers': 'Content-Length',
+            'Content-Disposition': 'attachment; filename="archive.tar"',
+            'Content-Length': info.totalsize,
+            'Content-Type': 'application/x-tar',
+            'X-Download-Filename': 'archive.tar',
         });
 
-        memoryStream.on('end', () => {
-            const buffer = Buffer.concat(memoryChunks);
-            res.writeHead(200, {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Expose-Headers': 'Content-Length',
-                'Content-Disposition': 'attachment; filename="archive.zip"',
-                'Content-Length': buffer.length,
-                'Content-Type': 'application/zip',
-                'X-Download-Filename': 'archive.zip',
-            });
-            res.end(buffer);
-        });
-
-        archive.pipe(memoryStream);
+        archive.pipe(res);
 
         for (let i = 0; i < files.length; i++) {
             const stat = fs.statSync(path.join(pathdir, files[i]));
