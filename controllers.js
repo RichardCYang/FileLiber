@@ -1,5 +1,5 @@
 const dbmanager = require('./dbmanager');
-const archiver  = require('archiver');
+const tarlib    = require('./tarlib');
 const crypto    = require('crypto');
 const cookie    = require('cookie');
 const path      = require('path');
@@ -165,68 +165,49 @@ function downloadControl(req, res, username) {
     }
 
     if (files.length == 1) {
+        // 파일 정보를 가져오기 위한 객체
+        const stat = fs.statSync(path.join(pathdir, files[0]));
         // 다운 받을 파일이 하나면, 해당 파일만 다운로드 진행
         if (fs.existsSync(path.join(pathdir, files[0]))) {
-            const stat      = fs.statSync(path.join(pathdir, files[0]));
-            const archive   = archiver('zip', { zlib: { level: 9 } });
-            
-            if (stat.isDirectory()) {
-                res.setHeader('Transfer-Encoding', 'chunked');
+            if (stat.isFile()) {
                 res.writeHead(200, {
-                    'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0] + '.zip') + '"',
-                    'Content-Type': 'application/zip',
-                    'X-Download-Filename': encodeURIComponent(files[0] + '.zip'),
-                });
-
-                archive.on('progress', (progress) => {
-                    const percentage = (progress.entries.processed / progress.entries.total) * 100;
-                    res.write(`Progress: ${percentage}\n`);
-                });
-
-                archive.pipe(res);
-                archive.directory(path.join(pathdir, files[0]), false);
-                archive.finalize();
-            } else if (stat.isFile()) {
-                res.writeHead(200, {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Expose-Headers': 'Content-Length',
                     'Content-Disposition': 'attachment; filename="' + encodeURIComponent(files[0]) + '"',
-                    'Content-Length': stat.size,
                     'Content-Type': 'application/octet-stream',
                     'X-Download-Filename': encodeURIComponent(files[0]),
                 });
+    
+                const rstream = fs.createReadStream(path.join(pathdir, files[0]));
+                rstream.pipe(res);
+                return;
+            } else if (stat.isDirectory()) {
+                // 다운 받을 파일이 폴더이면? TAR 포맷으로 압축하여 다운로드 진행
+                const tarBuffer = tarlib.createTarBuffer(files, pathdir)
+                const tarStream = tarlib.tarBufferToStream(tarBuffer);
 
-                fs.createReadStream(path.join(pathdir, files[0])).pipe(res);
+                res.writeHead(200, {
+                    'Content-Disposition': 'attachment; filename="' + files[0] + '.tar"',
+                    'Content-Type': 'application/x-tar',
+                    'Content-Length': tarBuffer.length,
+                    'X-Download-Filename': files[0] + '.tar',
+                });
+
+                tarStream.pipe(res);
+                return;
             }
-            return;
         }
     } else if (files.length > 1) {
         // 다운 받을 파일이 여러개면, 해당 파일들을 전부 TAR 포맷으로 압축하여 다운로드 진행
-        const archive = archiver('zip', { zlib: { level: 9 } });
-        
-        res.setHeader('Transfer-Encoding', 'chunked');
+        const tarBuffer = tarlib.createTarBuffer(files, pathdir);
+        const tarStream = tarlib.tarBufferToStream(tarBuffer);
+
         res.writeHead(200, {
-            'Content-Disposition': 'attachment; filename="archive.zip"',
-            'Content-Type': 'application/zip',
-            'X-Download-Filename': 'archive.zip',
+            'Content-Disposition': 'attachment; filename="archive.tar"',
+            'Content-Type': 'application/x-tar',
+            'Content-Length': tarBuffer.length,
+            'X-Download-Filename': 'archive.tar',
         });
 
-        archive.on('progress', (progress) => {
-            const percentage = (progress.entries.processed / progress.entries.total) * 100;
-            res.write(`Progress: ${percentage}\n`);
-        });
-
-        archive.pipe(res);
-
-        for (let i = 0; i < files.length; i++) {
-            const stat = fs.statSync(path.join(pathdir, files[i]));
-            if (stat.isDirectory())
-                archive.directory(path.join(pathdir, files[i]));
-            else if (stat.isFile())
-                archive.file(path.join(pathdir, files[i]), { name:files[i] });
-        }
-        
-        archive.finalize();
+        tarStream.pipe(res);
         return;
     }
 
