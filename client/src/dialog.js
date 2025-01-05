@@ -56,6 +56,8 @@ function createProgressDialog(headerText, onCancel) {
     progressbar.className = 'dialog-progress-bar';
     progressbar.setCurrentRate = (rate) => {
         progressbar.style.width = rate + '%';
+        if (rate >= 100)
+            document.body.removeChild(overlay);
     };
 
     progressborder.appendChild(progressbar);

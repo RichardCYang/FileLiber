@@ -163,6 +163,7 @@ function downloadFile(files) {
 
     const progressbar = createProgressDialog('파일 다운로드 중..', () => {
         // 파일 다운로드 취소 처리
+        xhr.abort();
     });
 
     xhr.onprogress = (e) => {
@@ -171,9 +172,6 @@ function downloadFile(files) {
             const loaded = e.loaded;
             const percent = Math.round((loaded / total) * 100);
             progressbar.setCurrentRate(percent);
-        } else {
-            if (xhr.responseText.indexOf('Progress') > -1)
-                progressbar.setCurrentRate(parseInt(xhr.responseText.split(':')[1].trim()));
         }
     }
 
