@@ -2,12 +2,12 @@ const fs    = require('fs');
 const path  = require('path');
 const { Readable } = require("stream");
 
-function createTarHeader(filename, size) {
+function createTarHeader(filename, size, isDirectory = false) {
     // Tar 헤더 크기: 512 바이트
     const header = Buffer.alloc(512);
 
     // 파일 이름 (최대 100바이트)
-    const name = path.basename(filename);
+    const name = path.basename(filename) + (isDirectory ? '/' : '');
     header.write(name, 0, 100, "utf-8");
 
     // 파일 모드 (8진수, 8바이트)
@@ -17,7 +17,7 @@ function createTarHeader(filename, size) {
     header.write("0000000\0", 108, 8, "utf-8"); // UID
     header.write("0000000\0", 116, 8, "utf-8"); // GID
 
-    // 파일 크기 (8진수, 12바이트)
+    // 파일 크기 (8진수, 12바이트, 폴더는 0)
     const sizeOctal = size.toString(8).padStart(11, "0") + "\0";
     header.write(sizeOctal, 124, 12, "utf-8");
 
@@ -28,8 +28,8 @@ function createTarHeader(filename, size) {
     // 체크섬 계산을 위한 초기값
     header.fill(" ", 148, 156); // 체크섬 필드는 공백으로 초기화
 
-    // 파일 타입 (1바이트, 일반 파일은 '0')
-    header.write("0", 156, 1, "utf-8");
+    // 파일 타입 (1바이트, 일반 파일은 '0', 폴더는 '5')
+    header.write(isDirectory ? "5" : "0", 156, 1, "utf-8");
 
     // 체크섬 계산
     const checksum = header.reduce((sum, byte) => sum + byte, 0);
@@ -47,7 +47,11 @@ function createTarBuffer(files, pathdir) {
         const stats = fs.statSync(fullPath);
 
         if (stats.isDirectory()) {
-            // 폴더인 경우, 내부 파일 및 폴더를 재귀적으로 처리
+            // 폴더인 경우, 폴더 헤더 추가
+            const header = createTarHeader(filePath, 0, true);
+            buffers.push(header);
+
+            // 내부 파일 및 폴더를 재귀적으로 처리
             const subFiles = fs.readdirSync(fullPath);
             subFiles.forEach((subFile) => {
                 processPath(path.join(filePath, subFile));
@@ -55,7 +59,7 @@ function createTarBuffer(files, pathdir) {
         } else if (stats.isFile()) {
             // 파일인 경우, 헤더 및 내용을 tar 버퍼에 추가
             const content = fs.readFileSync(fullPath);
-            const header = createTarHeader(fullPath, content.length);
+            const header = createTarHeader(filePath, content.length, false);
 
             buffers.push(header);
             buffers.push(content);
