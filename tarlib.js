@@ -2,6 +2,70 @@ const fs    = require('fs');
 const path  = require('path');
 const { Readable } = require("stream");
 
+function getFilesInDirectory(dirPath) {
+    let files = [];
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+
+        if (entry.isDirectory()) {
+            // 하위 디렉토리 탐색
+            const subFiles = getFilesInDirectory(fullPath);
+            files = files.concat(subFiles);
+        } else {
+            // 파일 경로 추가
+            files.push(fullPath);
+        }
+    }
+
+    return files;
+}
+
+function getTotalFilesInDirectories(filePaths, pathdir) {
+    let totalFiles = 0;
+
+    for (const filePath of filePaths) {
+        const stats = fs.statSync(path.join(pathdir, filePath));
+
+        if (stats.isDirectory()) {
+            const filesInDir = getFilesInDirectory(path.join(pathdir, filePath));
+            totalFiles += filesInDir.length;
+        } else {
+            totalFiles += 1;
+        }
+    }
+
+    return totalFiles;
+}
+
+function calculateExpectedTarSize(filePaths, pathdir) {
+    let totalSize = 0;
+  
+    for (const filePath of filePaths) {
+        const stats = fs.statSync(path.join(pathdir, filePath));
+
+        if (stats.isDirectory()) {
+            // 디렉토리인 경우 하위 파일 탐색
+            const filesInDir = getFilesInDirectory(path.join(pathdir, filePath));
+            for (const file of filesInDir) {
+                const fileStats = fs.statSync(file);
+                totalSize += fileStats.size;
+            }
+        } else {
+            // 파일인 경우 크기 더하기
+            totalSize += stats.size;
+        }
+    }
+
+    // 추가적으로 TAR 헤더(512바이트씩)를 계산할 수도 있음
+    const totalFiles = filePaths.length + getTotalFilesInDirectories(filePaths, pathdir);
+    const tarHeaderSize = totalFiles * 512;
+    totalSize += tarHeaderSize;
+
+    return totalSize;    
+}  
+
 function createTarHeader(filename, size, isDirectory = false) {
     // Tar 헤더 크기: 512 바이트
     const header = Buffer.alloc(512);
@@ -39,8 +103,10 @@ function createTarHeader(filename, size, isDirectory = false) {
     return header;
 }
 
-function createTarBuffer(files, pathdir) {
-    const buffers = [];
+function createTarStream(files, pathdir) {
+    const stream = new Readable({
+        read() {}
+    });
 
     function processPath(filePath) {
         const fullPath = path.join(pathdir, filePath);
@@ -49,7 +115,7 @@ function createTarBuffer(files, pathdir) {
         if (stats.isDirectory()) {
             // 폴더인 경우, 폴더 헤더 추가
             const header = createTarHeader(filePath, 0, true);
-            buffers.push(header);
+            stream.push(header);
 
             // 내부 파일 및 폴더를 재귀적으로 처리
             const subFiles = fs.readdirSync(fullPath);
@@ -57,17 +123,17 @@ function createTarBuffer(files, pathdir) {
                 processPath(path.join(filePath, subFile));
             });
         } else if (stats.isFile()) {
-            // 파일인 경우, 헤더 및 내용을 tar 버퍼에 추가
+            // 파일인 경우, 헤더 및 내용을 tar 스트림에 추가
             const content = fs.readFileSync(fullPath);
             const header = createTarHeader(filePath, content.length, false);
 
-            buffers.push(header);
-            buffers.push(content);
+            stream.push(header);
+            stream.push(content);
 
             // 512바이트 블록으로 정렬 (패딩 추가)
             const padding = Buffer.alloc(512 - (content.length % 512), 0);
             if (padding.length > 0) {
-                buffers.push(padding);
+                stream.push(padding);
             }
         }
     }
@@ -78,21 +144,14 @@ function createTarBuffer(files, pathdir) {
 
     // tar 파일 종료 마커 (빈 블록 두 개)
     const endMarker = Buffer.alloc(1024, 0);
-    buffers.push(endMarker);
-
-    // 버퍼 합치기
-    return Buffer.concat(buffers);
-}
-
-function tarBufferToStream(tarBuffer) {
-    const stream = new Readable();
-    stream.push(tarBuffer);
+    stream.push(endMarker);
     stream.push(null);
+
     return stream;
 }
 
 module.exports = {
     createTarHeader,
-    createTarBuffer,
-    tarBufferToStream
+    createTarStream,
+    calculateExpectedTarSize,
 };

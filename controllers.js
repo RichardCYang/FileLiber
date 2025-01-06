@@ -181,13 +181,12 @@ function downloadControl(req, res, username) {
                 return;
             } else if (stat.isDirectory()) {
                 // 다운 받을 파일이 폴더이면? TAR 포맷으로 압축하여 다운로드 진행
-                const tarBuffer = tarlib.createTarBuffer(files, pathdir)
-                const tarStream = tarlib.tarBufferToStream(tarBuffer);
+                const tarStream = tarlib.createTarStream(files, pathdir)
 
                 res.writeHead(200, {
                     'Content-Disposition': 'attachment; filename="' + files[0] + '.tar"',
                     'Content-Type': 'application/x-tar',
-                    'Content-Length': tarBuffer.length,
+                    'Content-Length': tarlib.calculateExpectedTarSize(files, pathdir),
                     'X-Download-Filename': files[0] + '.tar',
                 });
 
@@ -197,13 +196,12 @@ function downloadControl(req, res, username) {
         }
     } else if (files.length > 1) {
         // 다운 받을 파일이 여러개면, 해당 파일들을 전부 TAR 포맷으로 압축하여 다운로드 진행
-        const tarBuffer = tarlib.createTarBuffer(files, pathdir);
-        const tarStream = tarlib.tarBufferToStream(tarBuffer);
+        const tarStream = tarlib.createTarStream(files, pathdir);
 
         res.writeHead(200, {
             'Content-Disposition': 'attachment; filename="archive.tar"',
             'Content-Type': 'application/x-tar',
-            'Content-Length': tarBuffer.length,
+            'Content-Length': tarlib.calculateExpectedTarSize(files, pathdir),
             'X-Download-Filename': 'archive.tar',
         });
 
