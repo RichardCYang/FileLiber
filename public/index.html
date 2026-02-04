@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileLiber Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-width: 240px;
+            --brand-primary: #2563eb;
+            --bg-main: #f8fafc;
+            --border-color: #e2e8f0;
+            --sidebar-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { background-color: var(--bg-main); font-family: 'Inter', system-ui, sans-serif; color: var(--text-main); margin: 0; overflow: hidden; }
+        .app-wrapper { display: flex; height: 100vh; flex-direction: column; }
+        .top-header { height: 56px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; justify-content: space-between; z-index: 100; }
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .sidebar-header { height: 48px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .sidebar-content { flex: 1; }
+        .sidebar-item { padding: 10px 24px; display: flex; align-items: center; gap: 12px; color: var(--text-main); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .sidebar-item:hover { background: #f1f5f9; }
+        .sidebar-item.active { color: var(--brand-primary); background: #eff6ff; border-right: 3px solid var(--brand-primary); }
+
+        .explorer-view { flex: 1; display: flex; flex-direction: column; background: #ffffff; overflow: hidden; position: relative; }
+        .toolbar { height: 48px; padding: 0 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Breadcrumbs */
+        .breadcrumb-area { height: 40px; padding: 0 24px; display: flex; align-items: center; background: #fafafa; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+        .breadcrumb-item { cursor: pointer; color: var(--brand-primary); display: flex; align-items: center; }
+        .breadcrumb-item:hover { text-decoration: underline; }
+        .breadcrumb-item::after { content: 'keyboard_arrow_right'; font-family: 'Material Icons'; margin: 0 4px; color: var(--text-muted); cursor: default; }
+        .breadcrumb-item:last-child { color: var(--text-main); cursor: default; font-weight: 600; }
+        .breadcrumb-item:last-child:hover { text-decoration: none; }
+        .breadcrumb-item:last-child::after { content: ''; }
+
+        .table-area { flex: 1; overflow-y: auto; }
+        .file-table { width: 100%; border-collapse: collapse; }
+        .file-table th { position: sticky; top: 0; background: #f8fafc; padding: 12px 24px; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+        .file-table tr { border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .file-table tr:hover { background: #f8fafc; }
+        .file-table td { padding: 12px 24px; font-size: 0.875rem; }
+
+        .btn-icon { background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; border-radius: 4px; }
+        .btn-icon:hover { background: #e2e8f0; color: var(--brand-primary); }
+        
+        .drop-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(37,99,235,0.05); border: 2px dashed var(--brand-primary); z-index: 50; display: none; align-items: center; justify-content: center; pointer-events: none; }
+        .drop-overlay.active { display: flex; }
+        .hidden { display: none !important; }
+
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .auth-card { width: 100%; max-width: 400px; padding: 40px; background: white; border-radius: 12px; border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+<div id="authOverlay">
+    <div class="auth-card">
+        <h3 id="authTitle" class="fw-bold mb-1">FileLiber</h3>
+        <p id="authSubtitle" class="text-muted small mb-4">Sign in to manage your files</p>
+        <form id="authForm">
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Username</label>
+                <input type="text" id="username" class="form-control" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold">Password</label>
+                <input type="password" id="password" class="form-control" required>
+            </div>
+            <button type="submit" id="authBtn" class="btn btn-primary w-100 fw-bold py-2">Sign In</button>
+            <div class="text-center mt-3 small">
+                <a href="#" id="authToggleLink" class="text-decoration-none" style="color: var(--brand-primary);">Create an account</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="app-wrapper">
+    <header class="top-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="material-icons text-primary">folder_shared</span>
+            <span class="fw-bold">FileLiber</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span id="userNameDisplay" class="small fw-bold text-muted"></span>
+            <button onclick="logout()" class="btn btn-link btn-sm text-muted text-decoration-none">Sign out</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">Navigation</div>
+            <div class="sidebar-content">
+                <a href="#" class="sidebar-item active" onclick="navigateTo('')">
+                    <span class="material-icons">folder</span> My Files
+                </a>
+                <a href="#" class="sidebar-item"><span class="material-icons">access_time</span> Recent</a>
+                <a href="#" class="sidebar-item"><span class="material-icons">star_outline</span> Favorites</a>
+                <a href="#" class="sidebar-item"><span class="material-icons">delete_outline</span> Trash</a>
+            </div>
+        </aside>
+
+        <main class="explorer-view" id="explorerView">
+            <div id="dropOverlay" class="drop-overlay">
+                <div class="text-center">
+                    <span class="material-icons" style="font-size: 48px; color: var(--brand-primary);">cloud_upload</span>
+                    <p class="fw-bold text-primary mt-2">Drop to upload here</p>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-1 fw-bold" style="width: 160px;" onclick="createDirectory()">
+                        <span class="material-icons" style="font-size: 18px;">create_new_folder</span> Create Directory
+                    </button>
+                    <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1 fw-bold" style="width: 160px;" onclick="document.getElementById('fileInput').click()">
+                        <span class="material-icons" style="font-size: 18px;">file_upload</span> Upload File
+                    </button>
+                    <input type="file" id="fileInput" style="display: none;">
+                </div>
+                <div id="uploadStatus" class="small text-primary fw-medium hidden">Processing...</div>
+                <button class="btn-icon" onclick="fetchFiles()"><span class="material-icons">refresh</span></button>
+            </div>
+
+            <div class="breadcrumb-area" id="breadcrumbs">
+                <!-- Breadcrumbs -->
+            </div>
+
+            <div class="table-area">
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Date Modified</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTableBody"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    let isLoginMode = true;
+    let currentPath = '';
+    const authOverlay = document.getElementById('authOverlay');
+    const authForm = document.getElementById('authForm');
+    
+    // Auth
+    async function checkAuth() {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+            const data = await res.json();
+            loginSuccess(data.user.username);
+        }
+    }
+
+    function loginSuccess(username) {
+        authOverlay.classList.add('hidden');
+        document.getElementById('userNameDisplay').textContent = username;
+        fetchFiles();
+    }
+
+    authForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const url = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok) isLoginMode ? loginSuccess(data.user.username) : (alert('Registered!'), location.reload());
+        else alert(data.error);
+    };
+
+    function logout() { fetch('/api/auth/logout', {method: 'POST'}).then(() => location.reload()); }
+
+    // Navigation
+    function navigateTo(path) {
+        // 경로 끝의 슬래시 제거 및 중복 슬래시 방지
+        currentPath = path.replace(/\/+$/, '').replace(/\/+/g, '/');
+        if (currentPath === '/') currentPath = '';
+        
+        updateBreadcrumbs();
+        fetchFiles();
+    }
+
+    function updateBreadcrumbs() {
+        const area = document.getElementById('breadcrumbs');
+        const parts = currentPath.split('/').filter(p => p);
+        
+        let html = `<span class="breadcrumb-item" onclick="navigateTo('')">Root</span>`;
+        let cumulativePath = '';
+        
+        parts.forEach((p) => {
+            cumulativePath = cumulativePath ? `${cumulativePath}/${p}` : p;
+            html += `<span class="breadcrumb-item" onclick="navigateTo('${cumulativePath}')">${p}</span>`;
+        });
+        area.innerHTML = html;
+    }
+
+    async function fetchFiles() {
+        const res = await fetch(`/api/files?path=${encodeURIComponent(currentPath)}`);
+        const files = await res.json();
+        const tbody = document.getElementById('fileTableBody');
+        
+        // 정렬: 폴더가 먼저 나오도록
+        files.sort((a, b) => b.isDirectory - a.isDirectory || a.name.localeCompare(b.name));
+
+        tbody.innerHTML = files.map(f => {
+            const itemPath = currentPath ? `${currentPath}/${f.name}` : f.name;
+            return `
+                <tr onclick="${f.isDirectory ? `navigateTo('${itemPath}')` : ''}">
+                    <td>
+                        <span class="material-icons" style="color: ${f.isDirectory ? '#fbbf24' : '#94a3b8'}; vertical-align: middle; margin-right: 8px;">
+                            ${f.isDirectory ? 'folder' : 'description'}
+                        </span>
+                        <span class="fw-medium">${f.name}</span>
+                    </td>
+                    <td class="text-muted">${f.isDirectory ? '--' : formatBytes(f.size)}</td>
+                    <td class="text-muted">${new Date(f.createdAt).toLocaleDateString()}</td>
+                    <td style="text-align: right;">
+                        ${!f.isDirectory ? `<button onclick="event.stopPropagation(); downloadFile('${f.name}')" class="btn-icon"><span class="material-icons">download</span></button>` : ''}
+                        <button onclick="event.stopPropagation(); deleteItem('${f.name}')" class="btn-icon"><span class="material-icons">delete</span></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Actions
+    async function createDirectory() {
+        const folderName = prompt('Enter folder name:');
+        if (!folderName) return;
+        const res = await fetch('/api/mkdir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folderName, currentPath })
+        });
+        if (res.ok) fetchFiles();
+        else alert('Error creating folder');
+    }
+
+    async function handleUpload(file) {
+        document.getElementById('uploadStatus').classList.remove('hidden');
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`/api/upload?path=${encodeURIComponent(currentPath)}`, { method: 'POST', body: formData });
+        if (res.ok) fetchFiles();
+        document.getElementById('uploadStatus').classList.add('hidden');
+    }
+
+    function downloadFile(name) {
+        const fullPath = (currentPath ? currentPath + '/' : '') + name;
+        window.location.href = `/api/download?path=${encodeURIComponent(fullPath)}`;
+    }
+
+    async function deleteItem(name) {
+        if (!confirm(`Delete ${name}?`)) return;
+        const fullPath = (currentPath ? currentPath + '/' : '') + name;
+        const res = await fetch('/api/delete', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: fullPath })
+        });
+        if (res.ok) fetchFiles();
+    }
+
+    // Init
+    document.getElementById('fileInput').onchange = (e) => e.target.files[0] && handleUpload(e.target.files[0]);
+    const ev = document.getElementById('explorerView');
+    const ov = document.getElementById('dropOverlay');
+    ev.ondragenter = ev.ondragover = (e) => { e.preventDefault(); ov.classList.add('active'); };
+    ev.ondragleave = (e) => ov.classList.remove('active');
+    ev.ondrop = (e) => { e.preventDefault(); ov.classList.remove('active'); handleUpload(e.dataTransfer.files[0]); };
+
+    function formatBytes(b) {
+        if (!b) return '0 B';
+        const i = Math.floor(Math.log(b) / Math.log(1024));
+        return (b / Math.pow(1024, i)).toFixed(1) + ' ' + ['B','KB','MB','GB'][i];
+    }
+
+    checkAuth();
+    updateBreadcrumbs();
+</script>
+</body>
+</html>
