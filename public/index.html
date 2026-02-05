@@ -154,6 +154,19 @@
     let currentPath = '';
     const authOverlay = document.getElementById('authOverlay');
     const authForm = document.getElementById('authForm');
+    const authToggleLink = document.getElementById('authToggleLink');
+    const authTitle = document.getElementById('authTitle');
+    const authSubtitle = document.getElementById('authSubtitle');
+    const authBtn = document.getElementById('authBtn');
+
+    authToggleLink.onclick = (e) => {
+        e.preventDefault();
+        isLoginMode = !isLoginMode;
+        authTitle.textContent = isLoginMode ? 'FileLiber' : 'Create Account';
+        authSubtitle.textContent = isLoginMode ? 'Sign in to manage your files' : 'Join us to start managing your files';
+        authBtn.textContent = isLoginMode ? 'Sign In' : 'Sign Up';
+        authToggleLink.textContent = isLoginMode ? 'Create an account' : 'Already have an account? Sign in';
+    };
     
     // Auth
     async function checkAuth() {
@@ -181,8 +194,14 @@
             body: JSON.stringify({ username, password })
         });
         const data = await res.json();
-        if (res.ok) isLoginMode ? loginSuccess(data.user.username) : (alert('Registered!'), location.reload());
-        else alert(data.error);
+        if (res.ok) {
+            if (isLoginMode) {
+                loginSuccess(data.user.username);
+            } else {
+                alert('Account created and logged in!');
+                loginSuccess(data.user.username);
+            }
+        } else alert(data.error);
     };
 
     function logout() { fetch('/api/auth/logout', {method: 'POST'}).then(() => location.reload()); }

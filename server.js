@@ -58,9 +58,10 @@ const getSafePath = (username, relativePath = '') => {
 app.post('/api/auth/register', async (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hashedPassword], (err) => {
+    db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hashedPassword], function(err) {
         if (err) return res.status(400).json({ error: 'Duplicate username' });
-        res.json({ message: 'Success' });
+        req.session.user = { id: this.lastID, username: username };
+        res.json({ message: 'Success', user: { username } });
     });
 });
 
